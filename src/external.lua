@@ -99,18 +99,23 @@
 			local tasks = {}
 			local task_complete = false
 			
+			-- task_indent
+				function task_indent(char)
+					local indent = ''
+					for _,v in ipairs(tasks) do indent = indent .. ( char or '\t') end
+					return indent
+				end
+			
 			-- task_add
 				function task(task)
-					local indent = ""
-					for i,v in ipairs(tasks) do indent = indent .. "\t" end
-					io.write( ((not task_complete and #tasks > 0)  and "\n" or "") .. indent .. task .. ": ")
+					io.write( ((not task_complete and #tasks > 0)  and "\n" or "") .. task_indent() .. task .. ": ")
 					table.insert(tasks, task)
 					task_complete = false
 				end
 
 			-- task_done 
-				function task_done()
-					io.write(not task_complete and "done\n" or "")
+				function task_done(task)
+					io.write(( task and task..": "or "" )..(not task_complete and "done\n" or ""))
 					table.remove(tasks)
 					task_complete = true 
 				end
