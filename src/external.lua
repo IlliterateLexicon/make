@@ -13,8 +13,11 @@
 						if type(v) == "table" then
 							io.write(k .. " = ")
 							printt(v, lvl+1)
-						elseif tostring(v) then
-							printf("%s = %s\n", tostring(k), tostring(v))
+						elseif tostring(v) and tostring(v):sub(-1,-1) ~= '\n' then
+							io.write(string.format("%s = %s\n", tostring(k), tostring(v)))
+							if tostring(v):sub(-1,-1) ~= '\n' then
+								io.write("")
+							end
 						end
 					end
 					for i=0,lvl-1 do
@@ -112,6 +115,12 @@
 					table.insert(tasks, task)
 					task_complete = false
 				end
+				
+				function taskf(task, ...)
+					io.write( ((not task_complete and #tasks > 0)  and "\n" or "") .. task_indent() .. task .. ": ")
+					table.insert(tasks, string.format(task, ...))
+					task_complete = false
+				end
 
 			-- task_done 
 				function task_done(task)
@@ -133,13 +142,18 @@
 				assert(cmd_format and cmd_format ~= "", "you must pass a command to cmd(cmd_format, ...)")
 				local out, err = "", ""
 					
-				local stdout, stderr, cmd_done = os.tmpname(), os.tmpname(), os.tmpname()
+				local stdout, stderr, cmd_done = "/tmp/luacmdstdout", "/tmp/luacmdstderr", "/tmp/luacmddone"
+				-- clear / remake files; run command pipeing to files; get file handles
+				io.open(stdout, "w"):close() io.open(stderr, "w"):close() io.open(cmd_done, "w"):close()
 				io.popen( "{ " .. string.format(string.format(cmd_format, ...) .. "; }>> %s 2>> %s; echo > %s", stdout, stderr, cmd_done ))
 				stdout, stderr, cmd_done = io.open(stdout, "r"), io.open(stderr, "r"), io.open(cmd_done, "r")
-				
+			
 				while io.toend(cmd_done) == 0 do
-					io.write( stdout:read(io.toend(stdout)) or "" )
-					io.write( stderr:read(io.toend(stderr)) or "" )
+					io.write(stdout:read(io.toend(stdout)) or "")
+					io.write(stderr:read(io.toend(stderr)) or "")
+					io.flush()
 				end
+
+				return false
 			end
 
